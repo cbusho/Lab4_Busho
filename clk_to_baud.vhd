@@ -37,7 +37,7 @@ end clk_to_baud;
 
 architecture Behavioral of clk_to_baud is
 
-signal baud_count : integer range 0 to 325 := 0;
+signal baud_count : integer range 0 to 651 := 0;
 signal en_16_x_baud : std_logic := '0';
 
 begin
@@ -47,7 +47,7 @@ begin
 		if reset = '1' then
 			baud_count <= 0;	
 		elsif rising_edge(clk) then
-			if baud_count = 325 then
+			if baud_count = 651 then
 				baud_count <= 0;
 				en_16_x_baud <= '1';
 			else 
