@@ -128,20 +128,58 @@ signal data, data_in_pico, data_out_pico: std_logic_vector(7 downto 0);
 signal switch1, switch2: std_logic_vector(7 downto 0);
 signal switcher1, switcher2: std_logic_vector(7 downto 0);
 
-signal leds: std_logic_vector(7 downto 0);
-signal leds_next : std_logic_vector(7 downto 0);
+signal leds, led_output: std_logic_vector(7 downto 0);
+signal num_result, letter_result: unsigned(7 downto 0);
+signal leds_next1, leds_next2 : std_logic_vector(3 downto 0);
 
 begin
-
-	leds <= leds_next;
 	
 	switcher1 <= "0000" & switch(7 downto 4);
 	switcher2 <= "0000" & switch(3 downto 0);
 	switch1 <= std_logic_vector(unsigned(switcher1) + X"30") when switcher1 <= "00001001" else
 				  std_logic_vector(unsigned(switcher1) + X"57");
 	switch2 <= std_logic_vector(unsigned(switcher2) + X"30") when switcher2 <= "00001001" else
-				  std_logic_vector(unsigned(switcher2) + X"57");			  
+				  std_logic_vector(unsigned(switcher2) + X"57");	
 
+	num_result <= unsigned(out_port) - X"30";
+	letter_result <= unsigned(out_port) - X"57";
+	
+	led_output <=  std_logic_vector(num_result) when num_result >= X"0" 
+						and num_result <= X"9" else
+						std_logic_vector(letter_result) when letter_result >= X"A"
+						and letter_result <= X"F" else
+						"00000000";
+						
+	process(clk, port_id)
+	begin
+		if(rising_edge(clk)) then
+			if (reset = '1') then
+				leds_next1 <= "0000";
+			else
+				if (port_id = X"06") then
+					leds_next1 <= led_output(3 downto 0);
+				end if;
+			end if;
+		end if;	
+	end process;	
+
+	process(clk, port_id)
+	begin
+		if(rising_edge(clk)) then
+			if (reset = '1') then
+				leds_next2 <= "0000";
+			else
+				if (port_id = X"05") then
+					leds_next2 <= led_output(3 downto 0);
+				end if;
+			end if;
+		end if;	
+	end process;			
+			
+	
+	led <= leds;
+	leds <= leds_next1 & leds_next2;
+						
 processor: kcpsm6
     generic map (                 hwbuild => X"00", 
                          interrupt_vector => X"3FF",
@@ -160,7 +198,8 @@ processor: kcpsm6
                      sleep => kcpsm6_sleep,
                      reset => kcpsm6_reset,
                        clk => clk);
-
+	
+	
 	process(clk)
 	begin
 		if rising_edge(clk) then
@@ -207,7 +246,9 @@ processor: kcpsm6
 						'1' when (port_id = X"AC" and read_strobe = '1') else
 						'1' when (port_id = X"AB" and read_strobe = '1') else
 						'0';	
-	buf_write <= 	'1' when (port_id = X"07" and write_strobe = '1') else
+	buf_write <= 	'1' when (port_id = X"05" and write_strobe = '1') else
+						'1' when (port_id = X"06" and write_strobe = '1') else
+						'1' when (port_id = X"07" and write_strobe = '1') else
 						'1' when (port_id = X"08" and write_strobe = '1') else
 						'1' when (port_id = X"09" and write_strobe = '1') else
 						'0';	
