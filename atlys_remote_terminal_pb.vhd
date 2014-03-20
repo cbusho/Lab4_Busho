@@ -22,7 +22,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+use IEEE.NUMERIC_STD.ALL;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx primitives in this code.
@@ -125,7 +125,8 @@ signal    kcpsm6_sleep : std_logic;
 signal    kcpsm6_reset : std_logic;
 signal serial, baud, buf_read, buf_write, buf_data, buf_half, buf_full, buff_reset: std_logic;
 signal data, data_in_pico, data_out_pico: std_logic_vector(7 downto 0);
-
+signal switch1, switch2: std_logic_vector(7 downto 0);
+signal switcher1, switcher2: std_logic_vector(7 downto 0);
 
 signal leds: std_logic_vector(7 downto 0);
 signal leds_next : std_logic_vector(7 downto 0);
@@ -133,6 +134,13 @@ signal leds_next : std_logic_vector(7 downto 0);
 begin
 
 	leds <= leds_next;
+	
+	switcher1 <= "0000" & switch(7 downto 4);
+	switcher2 <= "0000" & switch(3 downto 0);
+	switch1 <= std_logic_vector(unsigned(switcher1) + X"30") when switcher1 <= "00001001" else
+				  std_logic_vector(unsigned(switcher1) + X"57");
+	switch2 <= std_logic_vector(unsigned(switcher2) + X"30") when switcher2 <= "00001001" else
+				  std_logic_vector(unsigned(switcher2) + X"57");			  
 
 processor: kcpsm6
     generic map (                 hwbuild => X"00", 
@@ -160,6 +168,8 @@ processor: kcpsm6
 				when X"AF" => in_port <= data_in_pico;
 				when X"AE" => in_port <= data_in_pico;
 				when X"AD" => in_port <= data_in_pico;
+				when X"AC" => in_port <= switch1;
+				when X"AB" => in_port <= switch2;
 				when X"07" => in_port <= "0000000" & buf_data;
 				when others => in_port <= "00000000";
 			end case;
@@ -194,6 +204,8 @@ processor: kcpsm6
 	buf_read <= 	'1' when (port_id = X"AF" and read_strobe = '1') else
 						'1' when (port_id = X"AE" and read_strobe = '1') else
 						'1' when (port_id = X"AD" and read_strobe = '1') else
+						'1' when (port_id = X"AC" and read_strobe = '1') else
+						'1' when (port_id = X"AB" and read_strobe = '1') else
 						'0';	
 	buf_write <= 	'1' when (port_id = X"07" and write_strobe = '1') else
 						'1' when (port_id = X"08" and write_strobe = '1') else
