@@ -123,8 +123,8 @@ signal       interrupt : std_logic;
 signal   interrupt_ack : std_logic;
 signal    kcpsm6_sleep : std_logic;
 signal    kcpsm6_reset : std_logic;
-signal serial, baud, buf_read, buf_data, buf_half, buf_full, buff_reset: std_logic;
-signal data: std_logic_vector(7 downto 0);
+signal serial, baud, buf_read, buf_write, buf_data, buf_half, buf_full, buff_reset: std_logic;
+signal data, data_in_pico, data_out_pico: std_logic_vector(7 downto 0);
 
 
 signal leds: std_logic_vector(7 downto 0);
@@ -153,6 +153,18 @@ processor: kcpsm6
                      reset => kcpsm6_reset,
                        clk => clk);
 
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			case port_id is
+				when X"AF" => in_port <= data_in_pico;
+				when X"AE" => in_port <= data_in_pico;
+				when X"AD" => in_port <= data_in_pico;
+				when X"07" => in_port <= "0000000" & buf_data;
+				when others => in_port <= "00000000";
+			end case;
+		end if;
+	end process;
 
   kcpsm6_sleep <= '0';
   interrupt <= interrupt_ack;
@@ -170,24 +182,33 @@ processor: kcpsm6
 	Inst_uart_rx6: uart_rx6 PORT MAP(
 		serial_in => serial_in,
 		en_16_x_baud => baud,
-		data_out => data,
-		buffer_read => buf_data,
-		buffer_data_present => buf_read,
-		buffer_half_full => buf_half,
-		buffer_full => buf_full,
-		buffer_reset => buff_reset,
+		data_out => data_in_pico,
+		buffer_read => buf_read, 
+		buffer_data_present => buf_data,
+		buffer_half_full => open,
+		buffer_full => open,
+		buffer_reset => reset,
 		clk => clk
 	);
 		
+	buf_read <= 	'1' when (port_id = X"AF" and read_strobe = '1') else
+						'1' when (port_id = X"AE" and read_strobe = '1') else
+						'1' when (port_id = X"AD" and read_strobe = '1') else
+						'0';	
+	buf_write <= 	'1' when (port_id = X"07" and write_strobe = '1') else
+						'1' when (port_id = X"08" and write_strobe = '1') else
+						'1' when (port_id = X"09" and write_strobe = '1') else
+						'0';	
+		
 	Inst_uart_tx6: uart_tx6 PORT MAP(
-		data_in => data,
+		data_in => out_port,
 		en_16_x_baud => baud,
 		serial_out => serial_out,
-		buffer_write => buf_read,
-		buffer_data_present => buf_data,
-		buffer_half_full => buf_half,
-		buffer_full => buf_full,
-		buffer_reset => buff_reset,
+		buffer_write => buf_write,
+		buffer_data_present => open,
+		buffer_half_full => open,
+		buffer_full => open,
+		buffer_reset => reset,
 		clk => clk	
 	);
 	
