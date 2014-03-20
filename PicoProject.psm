@@ -1,0 +1,80 @@
+in_port  	  EQU $AD ; input
+in_port2	  EQU $AE ; input
+in_port3	  EQU $AF ; input
+in_port4	  EQU $AC ; input
+in_port5	  EQU $AB ; input
+buf_data_present  EQU $07 ; input
+out_port 	  EQU $07 ; output
+out_port2	  EQU $08 ; output
+out_port3 	  EQU $09 ; output
+out_port4	  EQU $06 ; output
+out_port5	  EQU $05 ; output
+temp 		  EQU s0
+temp2		  EQU s1 
+temp3		  EQU s2
+temp4		  EQU s3
+temp5		  EQU s4
+temp6		  EQU s5
+switch		  EQU s6
+led		  EQU s7
+
+Read: 	IN 	temp, buf_data_present
+	COMP    temp, 0x0
+     	JUMP 	Z, Read 
+     	AND     switch, 0x0
+     	AND     led, 0x0
+     	OR	switch, 0x1
+     	OR 	led, 0x1
+     	IN	temp2, in_port
+     	OUT 	temp2, out_port
+     	COMP	temp2, 0x73      ;check for 's'
+     	JUMP	Z, Chkled
+     	SUB	switch, 0x1      
+Chkled:	COMP    temp2, 0x6C	 ;check for 'l'
+     	JUMP    Z, Read2
+     	SUB	led, 0x1
+Read2: 	IN 	temp, buf_data_present
+	COMP    temp, 0x0
+     	JUMP 	Z, Read2 
+     	IN	temp3, in_port2
+     	OUT 	temp3, out_port2
+     	COMP	temp3, 0x77      ;check for 'w'
+     	JUMP	Z, Ckled2
+     	SUB	switch, 0x1      
+Ckled2:	COMP    temp3, 0x65	 ;check for 'e'
+     	JUMP    Z, Read3
+     	SUB	led, 0x1
+Read3: 	IN 	temp, buf_data_present
+	COMP    temp, 0x0
+     	JUMP 	Z, Read3      	
+     	IN	temp4, in_port3    	
+     	OUT 	temp4, out_port3
+     	COMP	temp4, 0x74      ;check for 't'
+     	JUMP	Z, Ckled3
+     	SUB	switch, 0x1      
+Ckled3:	COMP    temp4, 0x64	 ;check for 'd'
+     	JUMP    Z, SWT
+     	SUB	led, 0x1  
+SWT:   	COMP    switch, 0x1
+     	JUMP    NZ, LED
+     	IN      temp2, in_port4
+     	OUT	temp2, out_port2
+     	IN      temp3, in_port5
+     	OUT     temp3, out_port3
+LED:    COMP    led, 0x1
+        JUMP	NZ, Result    
+Read4: 	IN 	temp, buf_data_present
+	COMP    temp, 0x0
+     	JUMP 	Z, Read4
+     	IN	temp2, in_port
+     	OUT 	temp2, out_port4 
+Read5: 	IN 	temp, buf_data_present
+	COMP    temp, 0x0
+     	JUMP 	Z, Read5
+     	IN	temp3, in_port
+     	OUT 	temp3, out_port5       	  	
+Result:	OR 	temp5, 0xD
+     	OUT 	temp5, out_port  ;output return
+     	OR      temp6, 0xA
+     	OUT     temp6, out_port	 ;output new line
+     	JUMP	Read
