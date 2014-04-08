@@ -1,0 +1,10 @@
+##############################################################################
+## Filename:          C:/Users/C15Colin.Busho/Documents/ECE383/peripherals/MyProcessorIPLib/pcores/tutorial_leds_v1_00_a/data/tutorial_leds_v2_1_0.pao
+## Description:       Peripheral Analysis Order
+## Date:              Mon Mar 31 10:41:14 2014 (by Create and Import Peripheral Wizard)
+##############################################################################
+
+lib proc_common_v3_00_a  all 
+lib axi_lite_ipif_v1_01_a  all 
+lib tutorial_leds_v1_00_a user_logic vhdl
+lib tutorial_leds_v1_00_a tutorial_leds vhdl
